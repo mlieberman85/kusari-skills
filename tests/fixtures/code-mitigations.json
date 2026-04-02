@@ -1,0 +1,114 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Kusari Inspector",
+          "version": "1.0.0",
+          "rules": [
+            {
+              "id": "security-analysis",
+              "shortDescription": {
+                "text": "Overall security analysis result"
+              }
+            },
+            {
+              "id": "code-mitigation",
+              "shortDescription": {
+                "text": "Code-level security mitigation"
+              }
+            },
+            {
+              "id": "dependency-mitigation",
+              "shortDescription": {
+                "text": "Dependency-level security mitigation"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "security-analysis",
+          "level": "warning",
+          "message": {
+            "text": "Security concerns found that should be addressed before merging."
+          },
+          "helpUri": "https://app.kusari.dev/repos/example-org/example-repo/scans/def456",
+          "properties": {
+            "type": "security-analysis",
+            "should_proceed": false,
+            "health_score": 3,
+            "failed_analysis": false,
+            "justification": "Found 2 code-level security issues and 1 dependency concern. The SQL injection vulnerability in the authentication module is high risk and should be fixed before merging.",
+            "recommendation": "Fix the SQL injection vulnerability in src/auth/login.py and add input validation in src/api/handlers.py. Update the lodash dependency to address the prototype pollution vulnerability."
+          }
+        },
+        {
+          "ruleId": "code-mitigation",
+          "level": "warning",
+          "message": {
+            "text": "SQL injection vulnerability: User input is directly interpolated into SQL query without parameterization. Use parameterized queries to prevent SQL injection attacks."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/auth/login.py"
+                },
+                "region": {
+                  "startLine": 45,
+                  "snippet": {
+                    "text": "cursor.execute(f\"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'\")\n# Fix: Use parameterized query\ncursor.execute(\"SELECT * FROM users WHERE username = ? AND password = ?\", (username, password))"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "type": "code",
+            "line_number": 45
+          }
+        },
+        {
+          "ruleId": "code-mitigation",
+          "level": "warning",
+          "message": {
+            "text": "Missing input validation: The request body is used directly without validation or sanitization. Add input validation to prevent injection attacks and ensure data integrity."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/api/handlers.py"
+                },
+                "region": {
+                  "startLine": 112,
+                  "snippet": {
+                    "text": "data = request.get_json()\nuser_input = data['query']\n# Fix: Validate and sanitize input\nfrom validators import sanitize_input\ndata = request.get_json()\nuser_input = sanitize_input(data.get('query', ''))"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "type": "code",
+            "line_number": 112
+          }
+        },
+        {
+          "ruleId": "dependency-mitigation",
+          "level": "warning",
+          "message": {
+            "text": "lodash@4.17.20 has a known prototype pollution vulnerability (CVE-2021-23337). Update to lodash@4.17.21 or later to resolve this issue."
+          },
+          "properties": {
+            "type": "dependency"
+          }
+        }
+      ]
+    }
+  ]
+}

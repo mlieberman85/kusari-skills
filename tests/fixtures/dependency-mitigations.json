@@ -1,0 +1,66 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Kusari Inspector",
+          "version": "1.0.0",
+          "rules": [
+            {
+              "id": "security-analysis",
+              "shortDescription": {
+                "text": "Overall security analysis result"
+              }
+            },
+            {
+              "id": "dependency-mitigation",
+              "shortDescription": {
+                "text": "Dependency-level security mitigation"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "security-analysis",
+          "level": "warning",
+          "message": {
+            "text": "Dependency concerns found but code changes are clean."
+          },
+          "helpUri": "https://app.kusari.dev/repos/example-org/example-repo/scans/ghi789",
+          "properties": {
+            "type": "security-analysis",
+            "should_proceed": true,
+            "health_score": 4,
+            "failed_analysis": false,
+            "justification": "No code-level issues found but 2 dependency concerns were identified. The dependencies have known vulnerabilities that should be addressed, though the code itself is safe to merge.",
+            "recommendation": "Update axios to version 1.6.0 or later and replace event-stream with a maintained alternative."
+          }
+        },
+        {
+          "ruleId": "dependency-mitigation",
+          "level": "warning",
+          "message": {
+            "text": "axios@0.21.1 has a known Server-Side Request Forgery vulnerability (CVE-2023-45857). Update to axios@1.6.0 or later to resolve this issue."
+          },
+          "properties": {
+            "type": "dependency"
+          }
+        },
+        {
+          "ruleId": "dependency-mitigation",
+          "level": "warning",
+          "message": {
+            "text": "event-stream@3.3.6 was compromised in a supply chain attack (npm advisory 737). This package injects malicious code targeting cryptocurrency wallets. Remove event-stream and replace with a maintained alternative such as highland or through2."
+          },
+          "properties": {
+            "type": "dependency"
+          }
+        }
+      ]
+    }
+  ]
+}

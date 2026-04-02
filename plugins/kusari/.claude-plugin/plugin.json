@@ -1,0 +1,22 @@
+{
+  "name": "kusari",
+  "description": "Security scanning and remediation powered by Kusari Inspector",
+  "version": "1.0.0",
+  "author": {
+    "name": "Kusari",
+    "email": "support@kusari.dev",
+    "url": "https://kusari.dev"
+  },
+  "homepage": "https://kusari.dev",
+  "repository": "https://github.com/kusaridev/kusari-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "security",
+    "sca",
+    "vulnerability-scanning",
+    "supply-chain-security",
+    "sarif",
+    "remediation",
+    "kusari"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Kusari Inspector",
+          "version": "1.0.0",
+          "rules": [
+            {
+              "id": "security-analysis",
+              "shortDescription": {
+                "text": "Overall security analysis result"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "security-analysis",
+          "level": "note",
+          "message": {
+            "text": "No security issues found. The code changes look clean and follow security best practices."
+          },
+          "helpUri": "https://app.kusari.dev/repos/example-org/example-repo/scans/abc123",
+          "properties": {
+            "type": "security-analysis",
+            "should_proceed": true,
+            "health_score": 5,
+            "failed_analysis": false,
+            "justification": "No security issues found. The code changes look clean and follow security best practices.",
+            "recommendation": "No action needed. The code is safe to merge."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "kusari-security",
+  "owner": {
+    "name": "Kusari",
+    "email": "support@kusari.dev"
+  },
+  "metadata": {
+    "description": "Kusari security scanning and remediation skills",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "kusari",
+      "source": "./plugins/kusari",
+      "strict": true
+    }
+  ]
+}

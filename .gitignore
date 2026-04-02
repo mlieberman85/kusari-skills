@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.tmp
+
+# Runtime scan output (committed selectively, not by default)
+# Developers can choose to commit scan results
+# security/scans/*.md
