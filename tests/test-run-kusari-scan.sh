@@ -10,7 +10,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 FIXTURES_DIR="$SCRIPT_DIR/fixtures"
 
 TEST_TMPDIR=$(mktemp -d "${TMPDIR:-/tmp}/kusari-test-scan-XXXXXX")
-# shellcheck disable=SC2329  # cleanup is invoked via trap
+# shellcheck disable=SC2317,SC2329  # cleanup is invoked via trap
 cleanup() { rm -rf "$TEST_TMPDIR"; }
 trap cleanup EXIT
 
