@@ -45,6 +45,14 @@ Detailed usage documentation, prerequisites, and scan output format.
 
 ## Development
 
+### Linting
+
+```bash
+bash scripts/lint.sh
+```
+
+Runs [ShellCheck](https://www.shellcheck.net/) on all project-owned shell scripts (excludes `.specify/` framework scripts). This is the same check that runs in CI.
+
 ### Testing
 
 ```bash

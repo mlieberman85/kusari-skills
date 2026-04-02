@@ -25,6 +25,7 @@ install.sh                                   # Manual installer for target repos
 ```
 
 ## Active Technologies
+- Bash (POSIX-compatible shell scripts with `#!/usr/bin/env bash`) + ShellCheck (pre-installed on GitHub Actions Ubuntu runners) (003-shellcheck-ci)
 
 - Markdown (SKILL.md definitions) + Bash (scan pipeline scripts) + Kusari CLI v0.21.0+ (Go binary, installed separately)
 
@@ -51,3 +52,6 @@ This repo uses speckit for feature specification management.
 - **Speckit root**: `.specify/`
 - **Specs**: `specs/`
 - Run speckit commands (`/speckit.*`) from the repo root.
+
+## Recent Changes
+- 003-shellcheck-ci: Added Bash (POSIX-compatible shell scripts with `#!/usr/bin/env bash`) + ShellCheck (pre-installed on GitHub Actions Ubuntu runners)
