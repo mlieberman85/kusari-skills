@@ -10,8 +10,8 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 FIXTURES_DIR="$SCRIPT_DIR/fixtures"
 
 # Source the parser
-# shellcheck source=../plugins/kusari/skills/change-evaluate/scripts/parse-sarif.sh
-source "$PROJECT_ROOT/plugins/kusari/skills/change-evaluate/scripts/parse-sarif.sh"
+# shellcheck source=../plugins/kusari/skills/kusari-change-evaluate/scripts/parse-sarif.sh
+source "$PROJECT_ROOT/plugins/kusari/skills/kusari-change-evaluate/scripts/parse-sarif.sh"
 
 PASS_COUNT=0
 FAIL_COUNT=0

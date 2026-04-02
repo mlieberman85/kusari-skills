@@ -14,8 +14,8 @@ cleanup() { rm -rf "$TEST_TMPDIR"; }
 trap cleanup EXIT
 
 # Source common.sh (provides run_kusari_scan)
-# shellcheck source=../plugins/kusari/skills/change-evaluate/scripts/common.sh
-source "$PROJECT_ROOT/plugins/kusari/skills/change-evaluate/scripts/common.sh"
+# shellcheck source=../plugins/kusari/skills/kusari-change-evaluate/scripts/common.sh
+source "$PROJECT_ROOT/plugins/kusari/skills/kusari-change-evaluate/scripts/common.sh"
 
 PASS_COUNT=0
 FAIL_COUNT=0

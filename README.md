@@ -30,8 +30,8 @@ bash install.sh /path/to/target-repo
 
 | Skill | Description |
 |-------|-------------|
-| `/kusari.change.evaluate` | Run a security scan against a git revision |
-| `/kusari.change.fix` | Review and apply security fixes from scan results |
+| `/kusari-change-evaluate` | Run a security scan against a git revision |
+| `/kusari-change-fix` | Review and apply security fixes from scan results |
 
 ## Kusari Plugin ([plugins/kusari/](plugins/kusari/README.md))
 
