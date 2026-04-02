@@ -1,10 +1,11 @@
 ---
-name: "kusari.change.fix"
+name: "kusari-change-fix"
 description: "Review and apply security mitigations from a Kusari scan result. Walks through code and dependency findings interactively, applying fixes with developer approval and enriching dependency mitigations with remediation guidance from Kusari Inspector."
 allowed-tools: Read, Edit, Glob, Grep
 license: apache-2.0
+compatibility: "Requires kusari-inspector MCP server for enriched remediation guidance."
 metadata:
-  version: 1.0.0
+  version: "1.0.0"
 ---
 
 # Security Remediation
@@ -15,7 +16,7 @@ You walk through scan findings interactively, applying code fixes with developer
 
 $ARGUMENTS
 
-Optional additional context. Typically invoked after `/kusari.change.evaluate` with results already in the conversation.
+Optional additional context. Typically invoked after `/kusari-change-evaluate` with results already in the conversation.
 
 ---
 
@@ -66,12 +67,12 @@ Call the `mcp__kusari-inspector__get_software_vulnerabilities` tool with:
 
 ## Step 4: Locate scan results
 
-Locate the scan results from the current conversation context. The scan output (from `/kusari.change.evaluate`) contains:
+Locate the scan results from the current conversation context. The scan output (from `/kusari-change-evaluate`) contains:
 - Health Score and Status (Clean/Flagged/Error)
 - Code Mitigations: each with file path, line number, severity, description, and flagged code
 - Dependency Mitigations: each with severity and description
 
-If no scan results are present in the conversation, tell the developer to run `/kusari.change.evaluate` first.
+If no scan results are present in the conversation, tell the developer to run `/kusari-change-evaluate` first.
 
 If the status is "Clean" or there are no mitigations, inform the developer and stop.
 
@@ -111,4 +112,4 @@ In all cases, note that dependency mitigations require manual resolution (packag
 
 - Code fixes: how many applied vs skipped, which files were modified
 - Dependency items: how many reviewed, how many had enriched guidance vs scan-only
-- Suggest running `/kusari.change.evaluate` to verify the fixes.
+- Suggest running `/kusari-change-evaluate` to verify the fixes.

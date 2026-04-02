@@ -11,7 +11,7 @@ FIXTURES_DIR="$SCRIPT_DIR/fixtures"
 
 # Source the parser
 # shellcheck disable=SC1091  # path resolved at runtime via PROJECT_ROOT
-source "$PROJECT_ROOT/plugins/kusari/skills/change-evaluate/scripts/parse-sarif.sh"
+source "$PROJECT_ROOT/plugins/kusari/skills/kusari-change-evaluate/scripts/parse-sarif.sh"
 
 PASS_COUNT=0
 FAIL_COUNT=0
