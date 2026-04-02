@@ -15,6 +15,7 @@ set -euo pipefail
 if ! command -v jq >/dev/null 2>&1; then
   echo "ERROR: jq is required for SARIF parsing but is not installed." >&2
   echo "Install jq: brew install jq (macOS) or apt-get install jq (Linux)" >&2
+  # shellcheck disable=SC2317  # exit is reachable when script is executed directly (not sourced)
   return 1 2>/dev/null || exit 1
 fi
 
