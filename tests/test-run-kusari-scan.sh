@@ -10,12 +10,13 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 FIXTURES_DIR="$SCRIPT_DIR/fixtures"
 
 TEST_TMPDIR=$(mktemp -d "${TMPDIR:-/tmp}/kusari-test-scan-XXXXXX")
+# shellcheck disable=SC2317,SC2329  # cleanup is invoked via trap
 cleanup() { rm -rf "$TEST_TMPDIR"; }
 trap cleanup EXIT
 
 # Source common.sh (provides run_kusari_scan)
-# shellcheck source=../plugins/kusari/skills/change-evaluate/scripts/common.sh
-source "$PROJECT_ROOT/plugins/kusari/skills/change-evaluate/scripts/common.sh"
+# shellcheck disable=SC1091  # path resolved at runtime via PROJECT_ROOT
+source "$PROJECT_ROOT/plugins/kusari/skills/kusari-change-evaluate/scripts/common.sh"
 
 PASS_COUNT=0
 FAIL_COUNT=0

@@ -1,10 +1,11 @@
 ---
-name: "kusari.change.evaluate"
+name: "kusari-change-evaluate"
 description: "Run a Kusari security scan on the current repository. Scans code and dependencies against a git revision, presenting health score, code mitigations, and dependency mitigations. Use when the user asks for a security scan, vulnerability check, or wants to evaluate code changes for security issues."
 allowed-tools: Read, Bash, Glob
 license: apache-2.0
+compatibility: "Requires Kusari CLI v0.25.0+ or kusari-inspector MCP server. jq required for CLI fallback."
 metadata:
-  version: 1.0.0
+  version: "1.0.0"
 ---
 
 # Security Scan
@@ -123,4 +124,4 @@ Check for `failed_analysis` in the `scan` object. If `true`, report that the Kus
 - For each dependency mitigation: severity and description
 - Include console URL if available
 - Every finding must have an actionable next step
-- Suggest `/kusari.change.fix` if there are code mitigations to apply
+- Suggest `/kusari-change-fix` if there are code mitigations to apply

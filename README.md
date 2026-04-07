@@ -30,8 +30,8 @@ bash install.sh /path/to/target-repo
 
 | Skill | Description |
 |-------|-------------|
-| `/kusari.change.evaluate` | Run a security scan against a git revision |
-| `/kusari.change.fix` | Review and apply security fixes from scan results |
+| `/kusari-change-evaluate` | Run a security scan against a git revision |
+| `/kusari-change-fix` | Review and apply security fixes from scan results |
 
 ## Kusari Plugin ([plugins/kusari/](plugins/kusari/README.md))
 
@@ -44,6 +44,14 @@ Detailed usage documentation, prerequisites, and scan output format.
 - [Claude Code](https://docs.claude.ai/en/docs/claude-code-overview)
 
 ## Development
+
+### Linting
+
+```bash
+bash scripts/lint.sh
+```
+
+Runs [ShellCheck](https://www.shellcheck.net/) on all project-owned shell scripts (excludes `.specify/` framework scripts). This is the same check that runs in CI.
 
 ### Testing
 

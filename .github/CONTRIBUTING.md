@@ -7,8 +7,9 @@ Thank you for your interest in contributing to Kusari Skills.
 1. Fork and clone this repository
 2. Create a feature branch from `main`
 3. Make your changes
-4. Run the test suite: `bash tests/test-run-kusari-scan.sh && bash tests/test-sarif-parser.sh`
-5. Submit a pull request
+4. Run the linter: `bash scripts/lint.sh`
+5. Run the test suite: `bash tests/test-run-kusari-scan.sh && bash tests/test-sarif-parser.sh`
+6. Submit a pull request
 
 ## Skill Development
 

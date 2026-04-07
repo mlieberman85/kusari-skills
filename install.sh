@@ -66,8 +66,8 @@ for skill_dir in "$PLUGIN_DIR"/skills/*/; do
   cp "$skill_file" "$dest"
 done
 
-# Copy shared scripts (from the change-evaluate skill which owns the scan pipeline)
-SCAN_SCRIPTS="$PLUGIN_DIR/skills/change-evaluate/scripts"
+# Copy shared scripts (from the kusari-change-evaluate skill which owns the scan pipeline)
+SCAN_SCRIPTS="$PLUGIN_DIR/skills/kusari-change-evaluate/scripts"
 if [ -d "$SCAN_SCRIPTS" ]; then
   mkdir -p "$TARGET/.claude/scripts/kusari"
   for f in "$SCAN_SCRIPTS"/*.sh; do
@@ -88,5 +88,5 @@ echo ""
 echo "Installed kusari skills into $TARGET"
 echo ""
 echo "Available commands:"
-echo "  /kusari.change.evaluate   Scan repository for security issues"
-echo "  /kusari.change.fix        Review and apply fixes from scan results"
+echo "  /kusari-change-evaluate   Scan repository for security issues"
+echo "  /kusari-change-fix        Review and apply fixes from scan results"

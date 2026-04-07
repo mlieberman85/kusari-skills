@@ -6,8 +6,8 @@ AI-native security scanning and remediation skills for Claude Code, powered by [
 
 | Skill | Description |
 |-------|-------------|
-| `/kusari.change.evaluate` | Run a security scan against a git revision. Presents health score, code mitigations, and dependency mitigations. |
-| `/kusari.change.fix` | Walk through scan findings interactively. Apply code fixes with approval and get enriched dependency remediation guidance. |
+| `/kusari-change-evaluate` | Run a security scan against a git revision. Presents health score, code mitigations, and dependency mitigations. |
+| `/kusari-change-fix` | Walk through scan findings interactively. Apply code fixes with approval and get enriched dependency remediation guidance. |
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ AI-native security scanning and remediation skills for Claude Code, powered by [
 
 ## How It Works
 
-### Scanning (`/kusari.change.evaluate`)
+### Scanning (`/kusari-change-evaluate`)
 
 The scan skill tries the `kusari-inspector` MCP server first. If unavailable, it falls back to the CLI pipeline which flows through three bash scripts:
 
@@ -26,7 +26,7 @@ The scan skill tries the `kusari-inspector` MCP server first. If unavailable, it
 2. **`scan.sh`** -- Orchestrator that validates prerequisites, runs the scan, parses SARIF, and outputs structured JSON
 3. **`parse-sarif.sh`** -- Extracts `ScanResult`, `CodeMitigation[]`, and `DependencyMitigation[]` from SARIF 2.1.0 output using jq
 
-### Remediation (`/kusari.change.fix`)
+### Remediation (`/kusari-change-fix`)
 
 The remediation skill uses scan results from the conversation context:
 

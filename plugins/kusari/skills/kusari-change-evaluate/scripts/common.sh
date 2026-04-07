@@ -89,7 +89,7 @@ detect_default_branch() {
   done
 
   format_error "Could not detect the default branch."
-  echo "Specify a git revision explicitly, e.g.: /kusari.change.evaluate main" >&2
+  echo "Specify a git revision explicitly, e.g.: /kusari-change-evaluate main" >&2
   return 1
 }
 
