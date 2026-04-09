@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "kusari-inspector": {
+      "command": "kusari",
+      "args": ["ai", "serve"]
+    }
+  }
+}

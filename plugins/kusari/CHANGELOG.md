@@ -1,8 +1,14 @@
 # Changelog
 
-## 1.0.0 -- 2026-04-02
+## 0.2.0 -- 2026-04-08
 
-Initial release as a Claude Code plugin.
+### Added
+- Bundled MCP server configuration (`.mcp.json`) — `kusari-inspector` starts automatically when the plugin is enabled
+- `SessionStart` hook to verify Kusari CLI is installed and provide setup guidance
+
+## 0.1.0 -- 2026-04-02
+
+Initial pre-release.
 
 ### Skills
 - **kusari-change-evaluate** -- Security scanning via Kusari Inspector (MCP server with CLI fallback)

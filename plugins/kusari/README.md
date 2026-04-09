@@ -9,12 +9,19 @@ AI-native security scanning and remediation skills for Claude Code, powered by [
 | `/kusari-change-evaluate` | Run a security scan against a git revision. Presents health score, code mitigations, and dependency mitigations. |
 | `/kusari-change-fix` | Walk through scan findings interactively. Apply code fixes with approval and get enriched dependency remediation guidance. |
 
-## Prerequisites
+## Installation
 
+Install from the Claude Code plugin marketplace:
+
+```bash
+claude plugin install kusari
+```
+
+### Prerequisites
+
+- **[Kusari CLI](https://github.com/kusaridev/kusari-cli)** v1.0.0+ installed and authenticated (`kusari auth login`)
 - **Git** repository
-- **[Kusari CLI](https://github.com/kusaridev/kusari-cli)** v0.21.0+ installed and authenticated (`kusari auth login`), OR the `kusari-inspector` MCP server configured
 - **jq** for JSON parsing (`brew install jq` on macOS) -- only needed for CLI fallback
-- [Claude Code](https://docs.claude.ai/en/docs/claude-code-overview)
 
 ## How It Works
 
