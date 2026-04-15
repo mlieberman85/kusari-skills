@@ -3,7 +3,7 @@ name: "kusari-change-evaluate"
 description: "Run a Kusari security scan on the current repository. Scans code and dependencies against a git revision, presenting health score, code mitigations, and dependency mitigations. Use when the user asks for a security scan, vulnerability check, or wants to evaluate code changes for security issues."
 allowed-tools: Read, Bash, Glob
 license: apache-2.0
-compatibility: "Requires Kusari CLI v0.25.0+ or kusari-inspector MCP server. jq required for CLI fallback."
+compatibility: "Requires Kusari CLI v1.0.0+ or kusari-inspector MCP server. jq required for CLI fallback."
 metadata:
   version: "1.0.0"
 ---
