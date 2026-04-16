@@ -27,6 +27,8 @@ install.sh                                   # Manual installer for target repos
 ## Active Technologies
 - Bash (POSIX-compatible shell scripts with `#!/usr/bin/env bash`) + ShellCheck (pre-installed on GitHub Actions Ubuntu runners) (003-shellcheck-ci)
 - Markdown (SKILL.md) + Bash (install.sh, scripts) + YAML (frontmatter) + `skills-ref` validator (Python, installed via `uv tool install`) (004-skill-spec-compliance)
+- Bash (POSIX-compatible, `#!/usr/bin/env bash`, `set -euo pipefail`) for release scripts; YAML for GitHub Actions workflows; JSON for manifest manipulation (via `jq`). (006-release-process)
+- Git repo (tags, release-bump commits); GitHub Releases (release entries + assets); Sigstore transparency log (provenance + signatures); GitHub Security Advisories database (for security withdrawals). (006-release-process)
 
 - Markdown (SKILL.md definitions) + Bash (scan pipeline scripts) + Kusari CLI v0.21.0+ (Go binary, installed separately)
 
@@ -55,5 +57,6 @@ This repo uses speckit for feature specification management.
 - Run speckit commands (`/speckit.*`) from the repo root.
 
 ## Recent Changes
+- 006-release-process: Added Bash (POSIX-compatible, `#!/usr/bin/env bash`, `set -euo pipefail`) for release scripts; YAML for GitHub Actions workflows; JSON for manifest manipulation (via `jq`).
 - 003-shellcheck-ci: Added Bash (POSIX-compatible shell scripts with `#!/usr/bin/env bash`) + ShellCheck (pre-installed on GitHub Actions Ubuntu runners)
 - 004-skill-spec-compliance: Added Markdown (SKILL.md) + Bash (install.sh, scripts) + YAML (frontmatter) + `skills-ref` validator (Python, installed via `uv tool install`)

@@ -1,0 +1,30 @@
+name: Release Validation
+
+on:
+  pull_request:
+    paths:
+      - 'plugins/kusari/.claude-plugin/plugin.json'
+      - 'plugins/kusari/CHANGELOG.md'
+      - '.claude-plugin/marketplace.json'
+      - 'plugins/kusari/README.md'
+
+jobs:
+  validate-release-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Detect target version from plugin.json
+        id: detect
+        run: |
+          version=$(jq -r '.version' plugins/kusari/.claude-plugin/plugin.json)
+          echo "version=v${version}" >> "$GITHUB_OUTPUT"
+          echo "Detected release target: v${version}"
+
+      - name: Run release invariant checks
+        uses: ./.github/actions/release-validate
+        with:
+          version: ${{ steps.detect.outputs.version }}
+          from-ref: ${{ github.event.pull_request.head.sha }}

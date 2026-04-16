@@ -1,0 +1,145 @@
+# Feature Specification: Release Process
+
+**Feature Branch**: `006-release-process`
+**Created**: 2026-04-15
+**Status**: Draft
+**Input**: User description: "I want to now build a simple to start but extensible release process"
+
+## Clarifications
+
+### Session 2026-04-15
+
+- Q: Should the baseline release produce any authenticity/integrity signal, or is all authenticity strictly extension-point material? → A: Full build-provenance attestation + cryptographic signature on the release marker, produced by an automated CI pipeline with a scoped identity (SLSA-style). This replaces the earlier "baseline MUST NOT depend on CI" framing; CI is part of the baseline, because the provenance claim is only meaningful when issued by a hardened, auditable pipeline rather than a maintainer's workstation.
+- Q: What is the baseline withdrawal signal for a broken or compromised release? → A: Three-layer signal: (1) the withdrawn release is annotated with a WITHDRAWN banner pointing at its superseding release; (2) the withdrawn release is excluded from default-install resolution so installers that ask for "latest stable" skip it; (3) if the withdrawal is security-motivated, a machine-readable security advisory (GitHub Security Advisory / GHSA) is published referencing the withdrawn version, so downstream tooling can consume it as a revocation feed. Cryptographic revocation of the withdrawn release's signature/provenance is an extension-point addition, not a baseline requirement.
+- Q: What is the baseline gate on who can cut a release, and what immutability guarantees apply after publication? → A: Tag-protected initiation — the release pipeline is triggered only by tags matching a documented release-tag pattern, and push permission on such tags is restricted via tag-protection rules to a defined set of release maintainers. Post-publication, releases are immutable in a strong sense: the tag MUST NOT be moved or deleted, the signature and provenance MUST NOT be replaced, and the release entry's body may be edited only to add a withdrawal annotation per FR-012. Two-person approval gates and signed-commit-before-release workflows are extension-point additions for when the maintainer set grows or a threat model justifies the friction.
+- Q: What is the canonical release artifact that the signature and provenance bind to? → A: Source-at-tag. The release is the source state at the release tag; the cryptographic signature covers the release tag object, and the provenance attestation binds to the source commit and the tree hash of the `plugins/kusari/` subtree at that commit. There is no separately packaged artifact (tarball, zip, container image) in the baseline. A packaged-artifact channel with its own hash-bound provenance is a clean extension-point addition if a future installer consumes one.
+- Q: How do users install a specific released version, and what does default-install deliver? → A: Marketplace-pins-to-latest-release. On every release, the release ceremony updates `.claude-plugin/marketplace.json` so that the plugin entry's `source.ref` references the new release tag (the Claude Code marketplace manifest format supports a pinned git-ref form for plugin sources). The commit that advances `marketplace.json` to reference `vN` is the same commit that gets tagged `vN`, so subscribers who pin their marketplace subscription to `@vN` get a self-consistent marketplace+plugin pair. Dev work on `main` that touches `plugins/kusari/` is invisible to consumers until the next release advances the marketplace pointer — i.e., "if I don't release it, users don't see it." Default subscribers (no subscription ref pinned) get the latest released version. Pinned subscribers stay on their chosen release line. A separate release branch is not used; the pinned source ref inside `marketplace.json` provides the dev/released separation.
+- Constitution-derived (not user-clarified; recorded during /speckit.plan Constitution Check): Per Constitution §III (Supply Chain Integrity), SBOM generation MUST accompany every release, and an OpenSSF Baseline audit MUST be run and pass before every release. These are promoted from the FR-007 example list into explicit baseline requirements (FR-025 SBOM, FR-026 Baseline audit gate). SBOM remains a valid extension-point *format* choice (e.g., adding a second SBOM format later) but its presence at all is baseline, not optional.
+- Q: What should the SBOM actually contain — just the distributed files, or also the plugin's external runtime prerequisites (Kusari CLI, jq, bash, MCP servers)? → A: Both, using SPDX correctly. The plugin is a Mode 3 reference-only distribution (we ship 11 files; we do not bundle or install external tools). The SBOM's scope matches the distribution: (1) a Package entry for the plugin with the full file inventory and content hashes, and (2) `HAS_PREREQUISITE` Relationships pointing to each external runtime requirement, represented as separate Packages with `filesAnalyzed: false` and `purl`-based identification so consumers (and scanners) can tell these are *referenced*, not *contained*. Drift between the SBOM's prerequisite claims and what the plugin actually checks for at install time is prevented by introducing a canonical prerequisites declaration (FR-027) that both `hooks/check-prerequisites.sh` and the SBOM generator consume as a single source of truth. `HAS_PREREQUISITE` chosen over `RUNTIME_DEPENDENCY_OF` because a plugin that shells out to a CLI is expressing a prerequisite (must be installed separately), not an in-process runtime link.
+
+### Session 2026-04-15 (round 2)
+
+- Q: Does the baseline release process include a consumer-facing verification documentation requirement, and if so, where does it live? → A: Yes. The plugin MUST maintain a "Verifying a release" section in `plugins/kusari/README.md` with copy-pastable commands using public verification tools (at minimum `slsa-verifier` for provenance, `cosign verify` for the release signature), parameterized so a consumer replaces a version placeholder with the release they are verifying. The release process MUST validate that this section is present at the tagged commit before publishing; its absence is a release-time invariant failure (FR-005). This converts FR-016's verifiability *capability* into a documented practice — without a pointer from the plugin's primary user-facing doc, the verification story is performative.
+
+## User Scenarios & Testing *(mandatory)*
+
+### User Story 1 - Cut a versioned plugin release (Priority: P1)
+
+A release maintainer wants to publish a new version of the kusari plugin so users can install a known, documented snapshot of the plugin instead of tracking the moving main branch. The maintainer follows a short, documented procedure that produces a version identifier, updates the declared plugin version, records changes in the changelog, and makes release notes available to installers.
+
+**Why this priority**: Without this baseline, there is no way to pin, audit, or reference any shipped state of the plugin. Every subsequent goal (extensibility, automation, attestations) presumes a release has a stable, named identity. This is the MVP.
+
+**Independent Test**: Have a maintainer perform the release on a non-trivial change and verify that (a) the plugin's declared version has advanced, (b) a corresponding immutable marker exists in version control, (c) release notes describe what changed, and (d) a user following the documented install instructions can install the named version and get exactly that code.
+
+**Acceptance Scenarios**:
+
+1. **Given** the plugin is at version X with unreleased changes merged to the main branch, **When** the maintainer runs the documented release procedure for a minor version bump, **Then** a new version is declared in the plugin manifest, the changelog gains a new entry describing the change, and a named release is published with notes drawn from that changelog entry.
+2. **Given** a released version Y exists, **When** a user installs the plugin by that version identifier, **Then** they receive exactly the code and configuration that was in the repository at release time, with no drift from later changes on the main branch.
+3. **Given** a maintainer attempts to release a version number that already exists, **When** the procedure runs, **Then** it fails with a clear error before any public artifact is produced.
+
+---
+
+### User Story 2 - Discover what changed in a release (Priority: P2)
+
+Users installing or upgrading the plugin want to quickly understand what changed between the version they are running and the one they are considering — including behavior changes, new capabilities, and anything that requires their attention — by consulting a single canonical source (release notes) without reading commits.
+
+**Why this priority**: Release adoption depends on users being able to assess impact. For a security-tool plugin especially, users need to know whether a release changes scanning behavior, configuration, or trust boundaries. Without this, the P1 release mechanism produces numbered artifacts nobody can evaluate.
+
+**Independent Test**: Given an existing release and a newly cut one, a user who has never seen the repository before can read the release notes and list (a) what capabilities were added, (b) what was changed or fixed, and (c) whether any upgrade action is required — without consulting anything other than the release listing.
+
+**Acceptance Scenarios**:
+
+1. **Given** a release has been cut, **When** a user visits the release listing, **Then** they see a version identifier, a release date, and human-readable notes grouped by change category (added, changed, fixed, removed, security).
+2. **Given** a release contains a change that requires user action (e.g., removed configuration option, new prerequisite, behavior change), **When** a user reads the release notes, **Then** the required action is explicitly called out rather than implied.
+
+---
+
+### User Story 3 - Extend the release process without rewriting it (Priority: P3)
+
+A contributor wants to add a new step to the release process — for example, signing the release, generating a supply-chain attestation, producing an SBOM, or publishing to an external registry — without restructuring how releases are cut today. They plug the new step into a defined extension point.
+
+**Why this priority**: This is the "extensible" half of the brief. It does not block the first release, but it determines whether the process is a dead-end manual ritual or a foundation. It can be validated by successfully adding one new step without modifying the baseline flow.
+
+**Independent Test**: A contributor can add a named step (e.g., "produce SBOM after version bump, before the immutable release marker is created") by editing one documented location, without changing the order or behavior of existing steps, and without the process silently dropping the step.
+
+**Acceptance Scenarios**:
+
+1. **Given** the release process exists, **When** a contributor reads its documentation, **Then** they can identify named extension points (e.g., pre-release, post-version-bump, post-release-marker, post-publish) and what each point is responsible for.
+2. **Given** a new step is added at a defined extension point, **When** the next release is cut, **Then** the new step runs at the expected stage and its success or failure is visible to the maintainer.
+3. **Given** an extension step fails, **When** the release is in progress, **Then** the process halts with a clear indication of which step failed and what state has already been applied (e.g., version bumped but release marker not yet created).
+
+---
+
+### Edge Cases
+
+- What happens when the plugin manifest version, the changelog heading, and the release identifier disagree (e.g., manifest bumped but changelog not updated, or a release is cut for a different version than the manifest declares)?
+- How does the process handle pre-release or release-candidate versions (e.g., `0.3.0-rc.1`)?
+- How is a hotfix handled on an older release line (e.g., patching `0.2.x` after `0.3.0` has shipped)?
+- What happens if a release step fails partway through — e.g., the version was bumped and committed but the immutable marker was not published?
+- How does the process surface a release that is superseded or withdrawn (a broken release that should not be installed)? *(Resolved by FR-012, FR-017, FR-018: annotation + default-install exclusion, plus GHSA for security withdrawals.)*
+- What is released when the marketplace manifest changes but the plugin's code does not (e.g., adding a second plugin to the marketplace later)?
+- What happens if someone attempts to release from a non-release branch or from a working tree with uncommitted changes?
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+- **FR-001**: The release process MUST produce a unique, immutable version identifier for each release. Released identifiers MUST NOT be reused or overwritten.
+- **FR-002**: The version identifier MUST follow Semantic Versioning (major.minor.patch, with optional pre-release qualifier) so users can reason about compatibility impact.
+- **FR-003**: The release process MUST update the declared plugin version in a single canonical location so the installed plugin self-reports its released version.
+- **FR-004**: The release process MUST produce human-readable release notes grouped by change category (added, changed, fixed, removed, security) that a non-developer can evaluate.
+- **FR-005**: The release process MUST fail safely and visibly when invariants are violated — in particular, when the version being released already exists, when the changelog lacks an entry for the new version, when the declared version does not match the version being released, or when the working tree has uncommitted changes.
+- **FR-006**: The release process MUST be reviewable end-to-end — every step that produces a released artifact MUST be expressed as code or configuration in the repository, so a contributor can read it top-to-bottom (alongside any human-in-the-loop steps called out in documentation) to understand exactly what a release does.
+- **FR-007**: The release process MUST define named extension points at which future steps (e.g., external registry publishing, automated changelog derivation from commits, release-notification side effects, additional SBOM formats beyond the baseline) can be added without rewriting the baseline flow. At minimum, there MUST be distinct, named points before version bump, after version bump, after the immutable release marker is created, and after the release is published.
+- **FR-014**: The baseline release process MUST produce a cryptographic signature over the immutable release marker that a user or downstream tool can verify against the publisher's known identity, so a consumer can distinguish a release published through the canonical process from one that was not.
+- **FR-015**: The baseline release process MUST produce a build-provenance attestation that binds the released artifact contents to the specific source commit and build pipeline that produced them. The attestation MUST be issued by an automated pipeline with a scoped identity (not a maintainer's workstation), so the trust claim is tied to an auditable pipeline rather than an individual's machine.
+- **FR-016**: A released version's signature and provenance MUST be publicly verifiable by a consumer using only publicly known information (publisher identity, published verification materials) — no credential possessed only by the publisher is required to verify a release after the fact.
+- **FR-008**: A released version MUST be reproducible from version control — checking out the release identifier MUST yield the exact plugin contents that were released.
+- **FR-009**: Users MUST be able to install a specific released version of the plugin by referencing its version identifier, independent of the current state of the main branch.
+- **FR-010**: The release process MUST record release metadata (version, date, scope of change) in a location that persists independently of branch lifecycle (i.e., that does not disappear if a branch is deleted or rewritten).
+- **FR-011**: The release process MUST distinguish between released and unreleased changes so contributors know what will ship in the next release and what has already shipped.
+- **FR-012**: The release process MUST support withdrawing a broken or compromised release without rewriting history. At minimum: (a) the withdrawn release entry MUST be annotated with a human-readable withdrawal notice that points at its superseding release, and (b) the withdrawn release MUST NOT be resolved as the default-install target for installers that request "latest stable" (this is typically achieved by a superseding release with a higher version or, when no fix is yet available, by demoting the withdrawn release out of the default-install channel).
+- **FR-017**: When a withdrawal is motivated by a security issue, the release process MUST additionally publish a machine-readable security advisory that references the withdrawn version identifier, so downstream tooling can consume the withdrawal as a revocation feed without parsing release notes.
+- **FR-018**: Withdrawal MUST preserve the original release's immutable marker, signature, and provenance (per FR-001, FR-014, FR-015). Withdrawal is an additional published signal, not a retroactive edit of the original release.
+- **FR-019**: The release pipeline MUST be triggerable only by tags matching a documented release-tag pattern (e.g., `v*`). Push permission on release-pattern tags MUST be restricted via the host's tag-protection mechanism to a defined set of release maintainers. Contributors without tag-push permission on the release pattern MUST NOT be able to initiate a release.
+- **FR-020**: Once a release is published, the release is immutable in the following specific senses: (a) the release tag MUST NOT be moved to a different commit or deleted; (b) the release's signature and provenance attestations MUST NOT be replaced or re-issued against a different source state; (c) the release entry's notes MAY be edited only to add a withdrawal annotation per FR-012 — all other retroactive edits to the published release notes, attached verification materials, or associated source state are prohibited.
+- **FR-021**: The canonical release artifact is the source state at the release tag — specifically, the contents of the `plugins/kusari/` subtree at the tagged commit. The baseline release MUST NOT require or produce a separately packaged artifact (tarball, zip, container image). The signature required by FR-014 covers the release tag object; the provenance required by FR-015 binds to the source commit and the tree hash of the `plugins/kusari/` subtree, so a consumer verifying a release is verifying that the plugin subtree they installed is the one the release pipeline produced from the attested source commit.
+- **FR-022**: On every release, the release ceremony MUST advance `.claude-plugin/marketplace.json` so that the plugin entry's `source.ref` references the new release tag. The commit that advances `marketplace.json` MUST be the same commit that is tagged as the release, so that the tagged state is self-consistent (the `marketplace.json` at tag `vN` references ref `vN`). Consumers who subscribe to the marketplace without pinning a subscription ref MUST resolve to the latest released plugin version as a consequence, not to the development state of `plugins/kusari/` on `main`.
+- **FR-023**: Changes to `plugins/kusari/` on `main` that are not part of a release MUST NOT change what unpinned marketplace subscribers install. That is, merging dev work onto `main` between releases MUST have no effect on what a consumer resolves to when they subscribe to the marketplace or run an update check — only a release ceremony advances the resolved plugin version.
+- **FR-024**: Consumers who pin their marketplace subscription to a specific release ref (e.g., `@v0.3.0`) MUST remain on the corresponding plugin version regardless of subsequent releases, until they explicitly update their subscription ref.
+- **FR-013**: The release process MUST document how pre-release versions are designated so they can be published without implying readiness for general use.
+- **FR-025**: The baseline release process MUST produce a Software Bill of Materials (SBOM) in SPDX JSON format for each release. The SBOM's scope MUST match the plugin's distribution scope and MUST comprise: (a) a Package entry for the plugin itself with a complete file inventory of `plugins/kusari/` with content hashes (at least SHA-256), and (b) SPDX Relationship entries of type `HAS_PREREQUISITE` pointing at each externally-distributed runtime requirement. Each external prerequisite MUST be represented as a separate SPDX Package with `filesAnalyzed: false` and an `externalRefs` entry of category `PACKAGE-MANAGER` containing a `purl` that identifies the prerequisite's canonical external source — the SBOM MUST NOT claim or imply that external prerequisites are bundled. The SBOM MUST be published as an artifact attached to the release and MUST be covered by the release's signature/provenance so consumers can verify the SBOM was produced by the canonical pipeline.
+- **FR-026**: The baseline release process MUST run an OpenSSF Baseline compliance audit against the repository before the release is published. A release MUST NOT be published if the audit reports any control regressing from its last-passing state or any new HIGH/CRITICAL finding. The audit result MUST be recorded as a release artifact so the compliance state at release time is auditable after the fact.
+- **FR-027**: The plugin MUST maintain a canonical, machine-readable prerequisites declaration that enumerates each external runtime tool the plugin invokes (e.g., the Kusari CLI, system utilities, MCP server commands). This declaration MUST be the single source of truth consumed by both the install-time prerequisites check (`hooks/check-prerequisites.sh`) and the SBOM generator (which emits FR-025's `HAS_PREREQUISITE` relationships from it). Any change to what the plugin requires at runtime MUST be reflected in this declaration; install-time check failure when a declared prerequisite is absent is the self-policing signal against drift between the declaration and what the plugin actually needs.
+- **FR-028**: The plugin MUST maintain a consumer-facing "Verifying a release" section in `plugins/kusari/README.md` that documents how to verify a given release was produced by the canonical release pipeline. The section MUST include copy-pastable commands using publicly available verification tools (at minimum: `slsa-verifier` for the provenance attestation, `cosign verify` for the release tag signature), parameterized so a consumer substitutes a version placeholder with the release they are verifying. The release process MUST validate (as an invariant check) that this section is present in the README at the tagged commit; absence is a release-time failure per FR-005.
+
+### Key Entities *(include if feature involves data)*
+
+- **Release**: A named, immutable snapshot of the plugin at a point in time. Attributes: version identifier, release date, release notes, link to source state, signature + provenance attestation, status (current / superseded / withdrawn), and for `withdrawn` status: a reference to the superseding release and, if security-motivated, a reference to the associated advisory.
+- **Version**: The canonical identifier for a released snapshot (SemVer major.minor.patch, optionally with a pre-release qualifier). Referenced by installers and by release notes.
+- **Changelog entry**: A per-version record of what changed, grouped by category, written for human readers. Distinguishes released entries from the unreleased staging area.
+- **Extension point**: A named stage in the release process where additional steps may be inserted without altering the ordering or behavior of existing stages.
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: A maintainer can cut a release for a typical change set in under 15 minutes from deciding to release to release notes being visible to users.
+- **SC-002**: 100% of released versions are reproducible from their version identifier — a user who installs by version gets byte-identical plugin contents to what was released.
+- **SC-003**: 100% of published releases have associated human-readable release notes. No release is published without notes.
+- **SC-004**: A maintainer who was not involved in designing the process can complete their first release by following the written procedure, without synchronous help, on the first attempt.
+- **SC-005**: Adding a new step at a defined extension point requires changes in a single documented location and does not require modifying any existing step. Verified by landing one new step (e.g., SBOM generation, external-registry publishing, or automated changelog derivation) in under a day of work.
+- **SC-006**: Zero released versions have conflicting metadata across releases cut by the new process — the plugin manifest version, the changelog heading, and the release identifier always agree.
+- **SC-007**: A user reading only the release notes of a new version can correctly identify whether the release requires any action on their part (configuration change, prerequisite, behavior change) without consulting code or commits. Measured on a sample of released notes reviewed by someone unfamiliar with the change set.
+
+## Assumptions
+
+- The plugin manifest (`plugins/kusari/.claude-plugin/plugin.json`) is the canonical source of the plugin's version. Releases are cut per plugin-version bump. The marketplace manifest (`.claude-plugin/marketplace.json`) is also advanced on every release — specifically, its plugin entry's `source.ref` pointer is bumped to the new release tag (per FR-022) — so that unpinned marketplace subscribers resolve to the latest released plugin. Structural changes to the marketplace manifest (e.g., adding a second plugin, changing the plugin's `name` or `source` shape) remain a separate concern that can happen in between releases and do not require a plugin version bump on their own.
+- The existing manually-maintained `CHANGELOG.md` pattern in `plugins/kusari/` is retained. Automatic derivation of changelog entries from commits is out of scope for the initial process and is an explicit candidate for a later extension-point step, not a baseline requirement.
+- Distribution happens via the canonical source repository (`kusaridev/kusari-skills`) using the host's native immutable-tag and release-listing features. No separate package registry is assumed. If a Claude Code plugin registry exists or emerges, publishing to it is an extension-point step, not a replacement for the baseline.
+- Semantic Versioning is the versioning contract. The initial process does not automatically infer the next version from commit contents; the maintainer explicitly chooses major / minor / patch based on the nature of the change.
+- The release process is maintainer-initiated (e.g., a maintainer pushes a release marker or dispatches the release pipeline) but executed by an automated CI pipeline, because the baseline provenance and signature requirements (FR-014 through FR-016) are only meaningful when issued by a hardened, auditable pipeline with a scoped identity. Fully unattended triggers (scheduled releases, merge-triggered releases) remain candidate extension-point additions, not baseline requirements.
+- The repository's existing CI environment (GitHub Actions) is the execution environment for the release pipeline. Leveraging the host's native OIDC-to-signing-identity mechanism for the signing/provenance identity is expected, so release signatures are not tied to any individual maintainer's personal key.
+- Broken or withdrawn releases are handled by publishing a superseding release, annotating the broken one as withdrawn, excluding the withdrawn release from default-install resolution, and — for security-motivated withdrawals — publishing a machine-readable advisory (GHSA). The original release's marker, signature, and provenance remain intact; withdrawal is a published additional signal, not a retroactive edit.
+- Releases are cut only from the main branch in a clean working tree; release branches for long-lived older lines are out of scope for the initial process and would be introduced when the first hotfix need arises.
+- **OpenSSF Baseline bootstrap**: for the first release cut via this process, the audit (FR-026) establishes the baseline against which subsequent releases' regression gate compares. The first release passes the audit gate if it has no HIGH/CRITICAL findings; the "no regression from last passing state" check is trivially satisfied at bootstrap because there is no prior state. The audit result for the first release is archived as the starting point for the regression comparator.

@@ -1,0 +1,28 @@
+{
+  "tools": [
+    {
+      "name": "kusari",
+      "minVersion": "0.21.0",
+      "versionCommand": "kusari --version",
+      "purl": "pkg:github/kusaridev/kusari-cli",
+      "downloadLocation": "https://github.com/kusaridev/kusari-cli/releases",
+      "purpose": "SARIF scanning CLI and source of the kusari-inspector MCP server"
+    },
+    {
+      "name": "jq",
+      "minVersion": null,
+      "versionCommand": null,
+      "purl": "pkg:generic/jq",
+      "downloadLocation": "https://jqlang.org/",
+      "purpose": "JSON parsing in the scan-pipeline shell scripts"
+    },
+    {
+      "name": "bash",
+      "minVersion": "4.0.0",
+      "versionCommand": null,
+      "purl": "pkg:generic/bash",
+      "downloadLocation": "https://www.gnu.org/software/bash/",
+      "purpose": "Shell runtime for hook and skill scripts"
+    }
+  ]
+}

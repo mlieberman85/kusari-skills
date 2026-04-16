@@ -1,0 +1,5 @@
+{
+  "name": "kusari",
+  "description": "Security scanning and remediation powered by Kusari Inspector",
+  "version": "0.2.0"
+}

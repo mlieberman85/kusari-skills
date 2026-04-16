@@ -1,0 +1,15 @@
+{
+  "name": "kusari-security",
+  "plugins": [
+    {
+      "name": "kusari",
+      "source": {
+        "source": "github",
+        "repo": "kusaridev/kusari-skills",
+        "ref": "v0.3.0",
+        "path": "plugins/kusari"
+      },
+      "strict": true
+    }
+  ]
+}

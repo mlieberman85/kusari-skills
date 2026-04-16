@@ -1,0 +1,19 @@
+name: Validate Release
+description: Run release invariant checks against a version and ref
+inputs:
+  version:
+    description: Target version in canonical tag form (e.g., v0.3.0)
+    required: true
+  from-ref:
+    description: Git ref to validate against (default HEAD)
+    required: false
+    default: HEAD
+runs:
+  using: composite
+  steps:
+    - name: Validate release invariants
+      shell: bash
+      run: |
+        bash "${{ github.workspace }}/scripts/release/validate-release.sh" \
+          "${{ inputs.version }}" \
+          --from "${{ inputs.from-ref }}"
