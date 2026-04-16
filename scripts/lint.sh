@@ -54,7 +54,7 @@ echo "Checking ${#scripts[@]} shell script(s)..."
 FAIL_COUNT=0
 for s in "${scripts[@]}"; do
   rel="${s#"$REPO_ROOT/"}"
-  if shellcheck "$s"; then
+  if shellcheck -x "$s"; then
     echo "  PASS  $rel"
   else
     echo "  FAIL  $rel"

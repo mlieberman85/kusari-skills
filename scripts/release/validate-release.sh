@@ -58,6 +58,7 @@ if [ -n "$FIXTURE_ROOT" ]; then
   F_MARKETPLACE="${FIXTURE_ROOT}/marketplace.json"
   F_README="${FIXTURE_ROOT}/README.md"
 else
+  # shellcheck disable=SC2153 # These are defined in common.sh, not misspellings
   F_PLUGIN_JSON="$PLUGIN_JSON"
   F_CHANGELOG="$CHANGELOG"
   F_MARKETPLACE="$MARKETPLACE_JSON"

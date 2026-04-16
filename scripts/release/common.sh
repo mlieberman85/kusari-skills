@@ -15,11 +15,18 @@ REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
 }
 readonly REPO_ROOT
 
+# Exported for use by scripts that source this file.
+# shellcheck disable=SC2034
 readonly PLUGIN_DIR="${REPO_ROOT}/plugins/kusari"
+# shellcheck disable=SC2034
 readonly PLUGIN_JSON="${PLUGIN_DIR}/.claude-plugin/plugin.json"
+# shellcheck disable=SC2034
 readonly CHANGELOG="${PLUGIN_DIR}/CHANGELOG.md"
+# shellcheck disable=SC2034
 readonly MARKETPLACE_JSON="${REPO_ROOT}/.claude-plugin/marketplace.json"
+# shellcheck disable=SC2034
 readonly PREREQS_JSON="${PLUGIN_DIR}/prerequisites.json"
+# shellcheck disable=SC2034
 readonly README="${PLUGIN_DIR}/README.md"
 
 # ── Utilities ────────────────────────────────────────────────────────

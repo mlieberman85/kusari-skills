@@ -60,6 +60,7 @@ if [ -n "$OVERRIDE_ROOT" ]; then
   B_CHANGELOG="${OVERRIDE_ROOT}/plugins/kusari/CHANGELOG.md"
   B_MARKETPLACE="${OVERRIDE_ROOT}/.claude-plugin/marketplace.json"
 else
+  # shellcheck disable=SC2153 # These are defined in common.sh, not misspellings
   B_PLUGIN_JSON="$PLUGIN_JSON"
   B_CHANGELOG="$CHANGELOG"
   B_MARKETPLACE="$MARKETPLACE_JSON"
