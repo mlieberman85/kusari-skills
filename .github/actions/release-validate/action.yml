@@ -13,7 +13,11 @@ runs:
   steps:
     - name: Validate release invariants
       shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        FROM_REF: ${{ inputs.from-ref }}
+        WORKSPACE: ${{ github.workspace }}
       run: |
-        bash "${{ github.workspace }}/scripts/release/validate-release.sh" \
-          "${{ inputs.version }}" \
-          --from "${{ inputs.from-ref }}"
+        bash "${WORKSPACE}/scripts/release/validate-release.sh" \
+          "${VERSION}" \
+          --from "${FROM_REF}"

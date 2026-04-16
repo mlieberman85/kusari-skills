@@ -29,13 +29,18 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Parse version from tag or input
         id: version
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            TAG="${{ github.ref_name }}"
-          elif [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "${REF_TYPE}" = "tag" ]; then
+            TAG="${REF_NAME}"
+          elif [ "${DRY_RUN}" = "true" ]; then
             # For dry-run via workflow_dispatch, read from plugin.json
             TAG="v$(jq -r '.version' plugins/kusari/.claude-plugin/plugin.json)"
             echo "::notice::Dry-run mode: using version ${TAG} from plugin.json"
@@ -49,12 +54,13 @@ jobs:
 
           # Detect prerelease
           if [[ "$TAG" =~ -[a-zA-Z0-9.]+ ]]; then
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            PRERELEASE=true
           else
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            PRERELEASE=false
           fi
+          echo "prerelease=${PRERELEASE}" >> "$GITHUB_OUTPUT"
 
-          echo "Release version: ${TAG} (prerelease=${{ steps.version.outputs.prerelease || 'false' }})"
+          echo "Release version: ${TAG} (prerelease=${PRERELEASE})"
 
       - name: Validate release invariants
         uses: ./.github/actions/release-validate
@@ -69,9 +75,11 @@ jobs:
 
       - name: Render release notes from CHANGELOG
         id: notes
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: |
           bash scripts/release/render-release-notes.sh \
-            "${{ steps.version.outputs.tag }}" > release-notes.md
+            "${RELEASE_TAG}" > release-notes.md
           echo "Release notes rendered ($(wc -l < release-notes.md) lines)"
 
       - name: Run OpenSSF Baseline audit
@@ -103,19 +111,23 @@ jobs:
 
       - name: Sign release tag
         if: inputs.dry_run != 'true'
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: |
           echo "::notice::Tag signing via cosign will be configured when Sigstore keyless flow is set up."
-          echo "Placeholder: cosign sign --yes refs/tags/${{ steps.version.outputs.tag }}"
+          echo "Placeholder: cosign sign --yes refs/tags/${RELEASE_TAG}"
           # TODO: Uncomment when cosign is installed and OIDC identity is configured:
-          # cosign sign --yes "refs/tags/${{ steps.version.outputs.tag }}"
-          echo '{"signed": true, "tag": "${{ steps.version.outputs.tag }}", "note": "placeholder"}' > "${{ steps.version.outputs.tag }}.sig"
+          # cosign sign --yes "refs/tags/${RELEASE_TAG}"
+          printf '{"signed": true, "tag": "%s", "note": "placeholder"}\n' "${RELEASE_TAG}" > "${RELEASE_TAG}.sig"
 
       - name: Generate provenance attestation
         if: inputs.dry_run != 'true'
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: |
           echo "::notice::SLSA provenance generation placeholder — replace with slsa-github-generator reusable workflow call."
           # TODO: Migrate to slsa-framework/slsa-github-generator call
-          echo '{"_type": "https://in-toto.io/Statement/v1", "predicateType": "https://slsa.dev/provenance/v1", "note": "placeholder"}' > "${{ steps.version.outputs.tag }}.intoto.jsonl"
+          echo '{"_type": "https://in-toto.io/Statement/v1", "predicateType": "https://slsa.dev/provenance/v1", "note": "placeholder"}' > "${RELEASE_TAG}.intoto.jsonl"
 
       # === EXTENSION POINT: post-release-marker ===
       # Runs after signature and provenance are issued but BEFORE the GitHub
@@ -129,21 +141,23 @@ jobs:
         if: inputs.dry_run != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          IS_PRERELEASE: ${{ steps.version.outputs.prerelease }}
         run: |
           PRERELEASE_FLAG=""
-          if [ "${{ steps.version.outputs.prerelease }}" = "true" ]; then
+          if [ "${IS_PRERELEASE}" = "true" ]; then
             PRERELEASE_FLAG="--prerelease"
           fi
 
-          gh release create "${{ steps.version.outputs.tag }}" \
-            --title "${{ steps.version.outputs.tag }}" \
+          gh release create "${RELEASE_TAG}" \
+            --title "${RELEASE_TAG}" \
             --notes-file release-notes.md \
             $PRERELEASE_FLAG \
             openssf-baseline.json \
-            "${{ steps.version.outputs.tag }}.intoto.jsonl" \
-            "${{ steps.version.outputs.tag }}.sig"
+            "${RELEASE_TAG}.intoto.jsonl" \
+            "${RELEASE_TAG}.sig"
 
-          echo "::notice::Release ${{ steps.version.outputs.tag }} published"
+          echo "::notice::Release ${RELEASE_TAG} published"
 
       - name: Upload dry-run artifacts
         if: inputs.dry_run == 'true'
@@ -162,9 +176,13 @@ jobs:
       # === END EXTENSION POINT ===
 
       - name: Summary
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          IS_PRERELEASE: ${{ steps.version.outputs.prerelease }}
         run: |
-          echo "### Release ${{ steps.version.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
+          echo "### Release ${RELEASE_TAG}" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${DRY_RUN}" = "true" ]; then
             echo "**Mode**: Dry run (no artifacts published)" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "**Mode**: Published" >> "$GITHUB_STEP_SUMMARY"
@@ -173,4 +191,4 @@ jobs:
           echo "| Artifact | Status |" >> "$GITHUB_STEP_SUMMARY"
           echo "|----------|--------|" >> "$GITHUB_STEP_SUMMARY"
           echo "| Baseline audit | $(jq -r '.status' openssf-baseline.json) |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Prerelease | ${{ steps.version.outputs.prerelease }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Prerelease | ${IS_PRERELEASE} |" >> "$GITHUB_STEP_SUMMARY"
