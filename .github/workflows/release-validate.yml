@@ -19,14 +19,29 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Detect target version from plugin.json
+      - name: Detect plugin.json version bump
         id: detect
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PLUGIN_JSON: plugins/kusari/.claude-plugin/plugin.json
         run: |
-          version=$(jq -r '.version' plugins/kusari/.claude-plugin/plugin.json)
-          echo "version=v${version}" >> "$GITHUB_OUTPUT"
-          echo "Detected release target: v${version}"
+          head_version=$(jq -r '.version' "${PLUGIN_JSON}")
+          if git cat-file -e "${BASE_SHA}:${PLUGIN_JSON}" 2>/dev/null; then
+            base_version=$(git show "${BASE_SHA}:${PLUGIN_JSON}" | jq -r '.version')
+          else
+            base_version=""
+          fi
+          if [ "${head_version}" != "${base_version}" ]; then
+            echo "bumped=true" >> "$GITHUB_OUTPUT"
+            echo "version=v${head_version}" >> "$GITHUB_OUTPUT"
+            echo "::notice::Release bump detected: ${base_version:-<none>} -> v${head_version}"
+          else
+            echo "bumped=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::plugin.json version unchanged (v${head_version}) — skipping release invariants"
+          fi
 
       - name: Run release invariant checks
+        if: steps.detect.outputs.bumped == 'true'
         uses: ./.github/actions/release-validate
         with:
           version: ${{ steps.detect.outputs.version }}
